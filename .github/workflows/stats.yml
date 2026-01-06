@@ -1,9 +1,12 @@
-name: Generate GitHub Stats SVG (Daily)
+name: Generate GitHub Stats SVG
 
 on:
   schedule:
-    - cron: "0 1 * * *"  # Daily (UTC)
+    - cron: "0 1 * * *"
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
   build:
@@ -16,18 +19,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install generator
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "stable"
+
+      - name: Install github-status generator
         run: |
-          sudo apt-get update
-          sudo apt-get install -y golang
           go install github.com/TBXark/github-status@latest
 
-      - name: Generate SVGs
+      - name: Generate SVGs into generated/
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mkdir -p generated
-          $(go env GOPATH)/bin/github-status --output generated
+          "$(go env GOPATH)/bin/github-status" --output generated
 
       - name: Commit & Push
         run: |
